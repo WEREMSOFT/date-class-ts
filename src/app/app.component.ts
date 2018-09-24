@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { BarclaysDate, Months } from './dateClass/barclays-date';
-import { curry } from 'lodash';
+import { __, curryN } from 'ramda';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -9,21 +9,43 @@ import { curry } from 'lodash';
 export class AppComponent implements OnInit {
 
   ngOnInit() {
-    // JSON.stringify = x => 'CADORNA';
+    const originalStringify = JSON.stringify;
+    let curryStringify = curryN(2, JSON.stringify);
+    curryStringify = curryStringify(__, (key, value) => {
+      if (value instanceof BarclaysDate) {
+        return 'CADORNA';
+      }
+
+      return value;
+    });
+
+    // JSON.stringify = x => {
+    //   console.warn((x instanceof BarclaysDate));
+    //   if (x instanceof BarclaysDate) {
+    //     return '{CADORNA}';
+    //   } else {
+    //     return originalStringify(x);
+    //   }
+    // };
+
     const date: BarclaysDate = BarclaysDate.getNewInstance(1978, Months.NOVEMBER, 9);
 
     const toJSON: any = {date: date};
 
-    const stringToServer = JSON.stringify(toJSON);
-    console.group('custom parse');
+    const stringToServer = curryStringify(toJSON); // JSON.stringify(toJSON);
     console.log(stringToServer);
-    console.log(JSON.parse(stringToServer, (key, value) => {
-      if (typeof value === 'string') {
-        console.warn(value);
-      }
-      return value;
-    }));
-    console.groupEnd();
+    // console.group('custom parse');
+    // console.log(stringToServer);
+    // console.log(JSON.parse(stringToServer, (key, value) => {
+    //   if (typeof value === 'string') {
+    //     console.warn(value);
+    //   }
+    //   return value;
+    // }));
+
+    // console.log(JSON.stringify(toJSON));
+
+    // console.groupEnd();
   }
 
 }
